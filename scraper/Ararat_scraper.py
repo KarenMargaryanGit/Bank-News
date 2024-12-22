@@ -4,13 +4,12 @@ import time
 import re
 import json
 from collections import OrderedDict
-from translate import translate
 
 def update_Ararat_news():
     print("--------------------------------------------------")
     print("Starting to update Ararat news")
 
-    url = 'https://www.araratbank.am/en/news?page=1'
+    url = 'https://www.araratbank.am/hy/norutyunner/?page=1'
     news_urls = []
     data = OrderedDict()
     path = 'news/ararat_news.json'
@@ -43,22 +42,25 @@ def update_Ararat_news():
         try:
             print("--------------------------------------------------")
             print(f"Scraping URL: {url}")
-            url_arm = url
-           
 
-            response = requests.get(url_arm)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+
+            response = requests.get(url, headers=headers)
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            title_en = soup.select_one('.static-content h1').text.strip()
-            print(f"Title: {title_en}")
+            title = soup.select_one('.static-content h1').text.strip()
+            print(f"Title: {title}")
 
             date = soup.select_one('.inner-box__date').text
             day, month, year = date.split('.')
             formatted_date = f'{year}-{month}-{day}'
             print(f"Date: {formatted_date}")
 
-            content_en = soup.select_one('.static-content').text.replace(title_en,"").replace(date,"").strip()
-            content_en = re.sub(r'\n+', ' ', content_en)
+            content = soup.select_one('.static-content').text.replace(title,"").replace(date,"").strip()
+            content = re.sub(r'\n+', '\n', content)
+            content = content.replace('\r', ' ')
             # print(f"Content length: {len(content)} characters")
             try:
                 category = soup.select_one('.inner-box__link-inner').text.strip()
@@ -68,14 +70,12 @@ def update_Ararat_news():
             url_entry = {
                 "date": formatted_date,
                 "category": category,
-                "title_en": title_en,
-                "content_en": content_en,
-                "title": '',
-                "content": '',
+                "title": title,
+                "content": content,
                 "scraped_at": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             
-            data[url_arm] = url_entry
+            data[url] = url_entry
         
         except Exception as e:
             print(f"Error scraping {url}: {e}")
@@ -139,10 +139,12 @@ def update_Ararat_announcements():
         try:
             print("--------------------------------------------------")
             print(f"Scraping URL: {url}")
-            url_arm = url
-           
 
-            response = requests.get(url_arm)
+            headers = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+            }
+
+            response = requests.get(url, headers=headers)
             soup = BeautifulSoup(response.content, 'html.parser')
             
             title = soup.select_one('.static-content h1').text.strip()
@@ -154,26 +156,22 @@ def update_Ararat_announcements():
             print(f"Date: {formatted_date}")
 
             content = soup.select_one('.static-content').text.replace(title,"").replace(date,"").strip()
-            content = re.sub(r'\n+', ' ', content)
-            content = re.sub(r'\r', ' ', content)
+            content = re.sub(r'\n+', '\n', content)
+            content = content.replace('\r', ' ')
             # print(f"Content length: {len(content)} characters")
 
-            category = "announcements"
+            category = "Հայտարարություններ"
             print(f"Category: {category}")
-
-            title_en, content_en, _ = translate(title, content,"")
 
             url_entry = {
                 "date": formatted_date,
                 "category": category,
-                "title_en": title_en,
-                "content_en": content_en,
                 "title": title,
                 "content": content,
                 "scraped_at": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             
-            data[url_arm] = url_entry
+            data[url] = url_entry
         
         except Exception as e:
             print(f"Error scraping {url}: {e}")

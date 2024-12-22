@@ -11,7 +11,7 @@ def update_ByblosBank_news():
     print("--------------------------------------------------")
     print("Starting to update ByblosBank news")
     
-    url = 'https://www.byblosbankarmenia.am/en/mediaCenter/all/page'
+    url = 'https://www.byblosbankarmenia.am/hy/mediaCenter/all/page'
     url1 = 'https://www.byblosbankarmenia.am'
     news_urls = []
     data = OrderedDict()
@@ -49,18 +49,18 @@ def update_ByblosBank_news():
             response = requests.get(url, headers=headers)
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            title_en = soup.select_one('.news_inner_title').text.strip()
-            print(f"Title: {title_en}")
+            title = soup.select_one('.news_inner_title').text.strip()
+            print(f"Title: {title}")
 
             date = soup.select('.text.text-14.font-spacing-1')[0].text
             day, month, year = date.split('.')[:3]
             formatted_date = f'{year.strip()}-{month.strip()}-{day.strip()}'
             print(f"Date: {formatted_date}")
 
-            content_en = soup.select('.content_text')[1].text.strip()
-            content_en = re.sub(r'\n+', ' ', content_en)
-            content_en = re.sub(r'\r', ' ', content_en)
-            # print(f"content_en length: {len(content_en)} characters")
+            content = soup.select('.content_text')[1].text.strip()
+            content = re.sub(r'\n+', '\n', content)
+            content = content.replace('\r', ' ')
+            # print(f"content_en length: {len(content)} characters")
             
             category = soup.select('.text.text-14.font-uppercase.font-spacing-1.color-gold')[0].text.strip()
             print(f"Category: {category}")
@@ -68,10 +68,8 @@ def update_ByblosBank_news():
             url_entry = {
                 "date": formatted_date,
                 "category": category,
-                "title_en": title_en,
-                "content_en": content_en,
-                "title": '',
-                "content": '',
+                "title": title,
+                "content": content,
                 "scraped_at": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             

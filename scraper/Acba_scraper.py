@@ -9,7 +9,7 @@ def update_Acba_news():
     print("--------------------------------------------------")
     print("Starting to update Acba news")
 
-    url = 'https://www.acba.am/en/news/page/1'
+    url = 'https://www.acba.am/hy/news/page/1'
     news_urls = []
     data = OrderedDict()
     path = 'news/acba_news.json'
@@ -55,14 +55,12 @@ def update_Acba_news():
         try:
             print("--------------------------------------------------")
             print(f"Scraping URL: {url}")
-            url_arm = url
-           
-
-            response = requests.get(url_arm)
+          
+            response = requests.get(url)
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            title_en = soup.select_one('.news_inner__title').text.strip()
-            print(f"Title: {title_en}")
+            title = soup.select_one('.news_inner__title').text.strip()
+            print(f"Title: {title}")
 
             date = soup.select_one('.news_inner__date').text
             # day, month, year = date.split('.')
@@ -70,8 +68,8 @@ def update_Acba_news():
             formatted_date = date
             print(f"Date: {formatted_date}")
 
-            content_en = soup.select_one('.news_inner__text').text.strip()
-            content_en = re.sub(r'\n+', '\n', content_en)
+            content = soup.select_one('.news_inner__text').text.strip()
+            content = re.sub(r'\n+', '\n', content)
             # print(f"Content length: {len(content)} characters")
             try:
                 category = soup.select_one('.template_head__title').text.strip()
@@ -81,14 +79,12 @@ def update_Acba_news():
             url_entry = {
                 "date": formatted_date,
                 "category": category,
-                "title_en": title_en,
-                "content_en": content_en,
-                "title": '',
-                "content": '',
+                "title": title,
+                "content": content,
                 "scraped_at": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             
-            data[url_arm] = url_entry
+            data[url] = url_entry
         
         except Exception as e:
             print(f"Error scraping {url}: {e}")

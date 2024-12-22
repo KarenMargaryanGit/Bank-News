@@ -4,7 +4,6 @@ import time
 import re
 import json
 from collections import OrderedDict
-from translate import translate
 
 def update_Evoca_news():
     print("--------------------------------------------------")
@@ -43,38 +42,13 @@ def update_Evoca_news():
         try:
             print("--------------------------------------------------")
             print(f"Scraping URL: {url}")
-            url_arm = url
-            try:
-                url_en = url.replace("https://www.evoca.am/hy/", "https://www.evoca.am/en/", 1)
-                response = requests.get(url_en)
-                soup = BeautifulSoup(response.content, 'html.parser')
-                
-                title_en = soup.select_one('.news-inner__title').text.strip()
-                title_en = re.sub(r'\n+', ' ', title_en)
-                title_en = re.sub(r'\"', ' ', title_en)
-                print(f"Title_en: {title_en}")
-                
-                content_en = soup.select_one('.static-content.clear-fix').text.strip()
-                content_en = re.sub(r'\n+', ' ', content_en)
-                content_en = re.sub(r'\"', ' ', content_en)
-                # print(f"Content length: {len(content)} characters")
-
-                category = soup.select_one('.news-list__link-cat').text.strip()
-                print(f"Category: {category}")
-
-            except Exception as e:
-                print(f"Error scraping {url}(en): {e}")
-                title_en = ""
-                content_en = ""
-                category = ""
-
-
-            response = requests.get(url_arm)
+            
+            response = requests.get(url)
             soup = BeautifulSoup(response.content, 'html.parser')
             
             title = soup.select_one('.news-inner__title').text.strip()
-            title = re.sub(r'\n+', ' ', title)
-            title = re.sub(r'\"', ' ', title)
+            title = re.sub(r'\n+', '\n', title)
+            title = title.replace('\r', ' ')
             print(f"Title: {title}")
 
             date = soup.select_one('.news-inner__date').text
@@ -83,28 +57,23 @@ def update_Evoca_news():
             print(f"Date: {formatted_date}")
 
             content = soup.select_one('.static-content.clear-fix').text.strip()
-            content = re.sub(r'\n+', ' ', content)
-            content = re.sub(r'\"', ' ', content)
+            content = re.sub(r'\n+', '\n', content)
+            content = content.replace('\r', ' ')
             # print(f"Content length: {len(content)} characters")
             
-            if category == "":
-                category = soup.select_one('.news-list__link-cat').text.strip()
-                print(f"Category: {category}")
+            category = soup.select_one('.news-list__link-cat').text.strip()
+            print(f"Category: {category}")
 
-            if title_en == ""  and content_en == "":
-                title_en, content_en, category = translate(title, content, category)
 
             url_entry = {
                 "date": formatted_date,
                 "category": category,
-                "title_en": title_en,
-                "content_en": content_en,
                 "title": title,
                 "content": content,
                 "scraped_at": time.strftime("%Y-%m-%d %H:%M:%S")
             }
             
-            data[url_arm] = url_entry
+            data[url] = url_entry
         
         except Exception as e:
             print(f"Error scraping {url}: {e}")
@@ -140,7 +109,7 @@ def update_Evoca_announcements():
 
     data = OrderedDict()
     path = 'news/evoca_announcements.json'
-    category = 'announcements'
+    category = 'Հայտարարություններ'
 
     try:
         with open(path, 'r', encoding='utf-8') as f:
@@ -158,8 +127,9 @@ def update_Evoca_announcements():
         for link in links:
 
             title = link.select_one('.accordion__title-text').text.strip()
-            title = re.sub(r'\n+', ' ', title)
-            title = re.sub(r'\"', ' ', title)
+            title = re.sub(r'\n+', '\n', title)
+            title = title.replace('\r', ' ')
+
             date = link.select_one('.accordion__date').text.strip()
             if title+'--'+date in existing_data:
                 url = None
@@ -170,21 +140,18 @@ def update_Evoca_announcements():
 
 
             content = link.select_one('.accordion__content').text.strip()
-            content = re.sub(r'\n+', ' ', content)
-            content = re.sub(r'\"', ' ', content)
+            content = re.sub(r'\n+', '\n', content)
+            content = content.replace('\r', ' ')
             print(f"Category: {category}")
 
             day, month, year = date.split('.')
             formatted_date = f'{year}-{month}-{day}'
             print(f"Date: {formatted_date}")
 
-            title_en, content_en, _ = translate(title, content,"")
 
             url_entry = {
                 "date": formatted_date,
                 "category": category,
-                "title_en": title_en,
-                "content_en": content_en,
                 "title": title,
                 "content": content,
                 "scraped_at": time.strftime("%Y-%m-%d %H:%M:%S")
