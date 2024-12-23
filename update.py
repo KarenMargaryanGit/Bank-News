@@ -7,7 +7,7 @@ from scraper.IdBank_scraper import update_IdBank_news
 from scraper.Amio_scraper import update_AMIO_news
 from scraper.AMX_scraper import update_AMX_news
 from scraper.Ardshin_scraper import update_Ardshin_news
-# from scraper.Ineco_scraper import update_Ineco_news
+from scraper.Ineco_scraper import update_Ineco_news
 # from scraper.FastBank_scraper import update_FastBank_news
 
 
