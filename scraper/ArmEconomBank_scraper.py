@@ -7,83 +7,70 @@ from collections import OrderedDict
 from datetime import datetime
 
 
-def update_FastBank_news():
+def update_ArmEconom_news():
     print("--------------------------------------------------")
-    print("Starting to update Fast Bank news")
-    url = "https://www.fastbank.am/papi/default/ModuleArticle/loadMore"
+    print("Starting to update ArmEconom Bank news")
+
+    url = "https://www.aeb.am/ajax.php"
+    url1 = 'https://www.aeb.am/'
     news_urls = []
     data = OrderedDict()
-    path = 'news/fastBank_news.json'
-
+    path = 'news/armeconom_news.json'
+    
     try:
         with open(path, 'r', encoding='utf-8') as f:
             existing_data = json.load(f, object_pairs_hook=OrderedDict)
     except FileNotFoundError:
         existing_data = OrderedDict()
 
-    page_index = 1
-    while url:
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-        }
-        params = {
-            "data": f'{{"moduleId":"95","pageIndex":"{page_index}","currentLangId":2,"categoryId":"0","orderBy":"0"}}',
-            "_token": "HtL8EthCQ1CyOcNNhe1hjq42e6HHwaVUcsNmJEtI"
-        }
+    payload = {
+        "start_point": 0,
+        "command": "add_news",
+        "limit": 900,
+        "current_lang_id": 1
+    }
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+
+    try:
+        response = requests.post(url, data=payload)
+
+        soup = BeautifulSoup(response.text, 'html.parser')
+        news_items = soup.find_all('div', class_='news')
+    except:
+        news_items = []
+
+    for item in news_items:
+        link = url1 + item.find('a', class_='title custom_headline')['href']       
+        if link in existing_data:
+            break
+        news_urls.append(link)
 
 
-
-        response = requests.get(url, headers=headers,params=params)
-        soup = BeautifulSoup(response.json()['data']['html'], 'html.parser')
-
-        articles = soup.find_all('div', class_='article-item')
-
-        for article in articles:
-            title_tag = article.find('h2', class_='article-item-title')
-            
-            link_tag = title_tag.find('a') if title_tag else None
-            link = link_tag['href'] if link_tag else "No Link"
-            if link in existing_data:
-                url = None
-                break 
-            news_urls.append(link)
-        
-        if response.json()['data']['loadmore'] == True:
-            page_index = response.json()['data']['nextPageIndex']
-        else:
-            url = None
-        time.sleep(1)
-    # print(f"Found {len(news_urls)} new news articles")
-    
     for url in news_urls:
         try:
             print("--------------------------------------------------")
             print(f"Scraping URL: {url}")
-            
-            headers = {
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-            }
 
             response = requests.get(url, headers=headers)
             soup = BeautifulSoup(response.content, 'html.parser')
             
-            title = soup.select_one('h1.article-item-title').text.strip()
+            title = soup.select_one('.news_inner__carousel_item__caption .custom_headline').text.strip()
             print(f"Title: {title}")
 
-            date = soup.select_one('.article-item-published-date').text.strip()
-            day, month, year = date.split(".")
-            formatted_date = f"{year}-{month}-{day}"
+            date = soup.select_one('.inner_txt .date').text.strip()
+            day, month, year = date.split('.')
+            formatted_date = f'{year}-{month}-{day}'
             print(f"Date: {formatted_date}")
 
-            content = soup.select_one(".article-item-fulltext").text.strip()
+            content = soup.select_one('.text-justify').text.strip()
             content = re.sub(r'\n+', '\n', content)
             content = content.replace('\r', ' ')
-            content = content.strip()
-            
+            # print(f"Content length: {len(content)} characters")
 
-            category = ''
+            category = ""
             print(f"Category: {category}")
-
             url_entry = {
                 "date": formatted_date,
                 "category": category,
@@ -98,7 +85,7 @@ def update_FastBank_news():
             print(f"Error scraping {url}: {e}")
         
         time.sleep(1)
-
+    
     new_data_len = len(data)
     final_data = data
     final_data.update(existing_data)
@@ -110,11 +97,11 @@ def update_FastBank_news():
         
         print(f"Total entries: {len(final_data)}")
         print(f"New entries: {new_data_len}")
-        print("Done updating Fast Bank news")
+        print("Done updating ArmEconom Bank news")
     except Exception as e:
         print(f"Error saving data to {path}: {e}")
         with open(path, 'w', encoding='utf-8') as f:
             json.dump(existing_data, f, indent=4, ensure_ascii=False)
         
         print(f"Total entries: {len(existing_data)}")
-        print("Done updating Fast Bank news")
+        print("Done updating ArmEconom Bank news")
